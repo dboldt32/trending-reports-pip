@@ -128,9 +128,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       </div>
     </aside>
     <main class="main-content">
-      <div class="page-header">
-        <h1>Trending Reports</h1>
-        <p>Real Etsy listings with real data — use these to research your next product. Curated and shared by Donna from her own research.</p>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#00E5FF;margin-bottom:0.3rem;">CURATED BY DONNA FOR PIP MEMBERS</div>
+          <h1>Trending Reports</h1>
+          <p>Real Etsy listings with real sales data. Use these to research what is selling, at what price, and for how long.</p>
+        </div>
+        <button id="add-listing-btn" style="display:none;padding:0.7rem 1.25rem;background:#FF2D78;color:white;border:none;border-radius:10px;font-family:Syne,sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;white-space:nowrap;flex-shrink:0;" onclick="openAddTrendingModal()">+ Add Listing</button>
       </div>
       <div class="results-count" id="results-count"></div>
       <div class="trending-grid" id="trending-grid"></div>
@@ -321,6 +325,117 @@ function makePlaceholder(){
 }
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+
+// Show Add button only for Donna
+var DONNA_EMAIL='dboldt32@gmail.com';
+var currentUser='';
+function checkDonna(email){
+  currentUser=email;
+  if(email===DONNA_EMAIL){document.getElementById('add-listing-btn').style.display='block';}
+}
+
+function openAddTrendingModal(){
+  ['at-title','at-link','at-img','at-price','at-sale-price','at-duration','at-tags','at-theme','at-mo-sales','at-mo-revenue','at-total-revenue','at-views','at-notes'].forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
+  document.getElementById('at-product').value='';
+  document.getElementById('at-holiday').value='';
+  document.getElementById('at-img-preview').style.display='none';
+  document.getElementById('modal-add-trending').style.display='flex';
+  setTimeout(function(){document.getElementById('at-title').focus();},100);
+}
+
+function previewATImg(url){
+  var p=document.getElementById('at-img-preview'),i=document.getElementById('at-img-preview-img');
+  if(url&&url.startsWith('http')){i.src=url;p.style.display='block';}else p.style.display='none';
+}
+
+function saveAddTrending(){
+  var title=document.getElementById('at-title').value.trim();
+  if(!title){showToast('Enter a title first');return;}
+  var nd={
+    link:document.getElementById('at-link').value.trim(),
+    img:document.getElementById('at-img').value.trim(),
+    price:document.getElementById('at-price').value.trim(),
+    sale_price:document.getElementById('at-sale-price').value.trim(),
+    listed_duration:document.getElementById('at-duration').value.trim(),
+    tags:document.getElementById('at-tags').value.trim(),
+    theme:document.getElementById('at-theme').value.trim(),
+    holiday:document.getElementById('at-holiday').value,
+    my_notes:document.getElementById('at-notes').value.trim(),
+    mo_sales:document.getElementById('at-mo-sales').value.trim(),
+    mo_revenue:document.getElementById('at-mo-revenue').value.trim(),
+    total_revenue:document.getElementById('at-total-revenue').value.trim(),
+    views:document.getElementById('at-views').value.trim()
+  };
+  var pt=document.getElementById('at-product').value||'';
+  sb('POST','/rest/v1/pip_flowboard_cards',{
+    member_email:currentUser,title:title,product_type:pt,category:pt,
+    stage:'vault',is_trending:true,notes:JSON.stringify(nd),
+    checklist:{},etsy_url:'',is_starred:false,stale_nudge_dismissed:false
+  },function(err,resp){
+    if(!err&&Array.isArray(resp)&&resp.length){
+      allItems.unshift(resp[0]);
+      document.getElementById('modal-add-trending').style.display='none';
+      buildSidebar();renderTrending();showToast('Added to Trending Reports!');
+    } else showToast('Something went wrong');
+  });
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')document.querySelectorAll('[id^="modal-"]').forEach(function(m){m.style.display='none';});
+});
 </script>
+
+<!-- ADD TO TRENDING MODAL -->
+<div id="modal-add-trending" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#111F35;border:1px solid #3A5280;border-radius:18px;padding:1.75rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+      <div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.25rem;color:white;">Add to Trending Reports</div>
+      <button onclick="document.getElementById('modal-add-trending').style.display='none'" style="background:rgba(255,255,255,0.1);border:1px solid #3A5280;border-radius:6px;color:white;width:28px;height:28px;cursor:pointer;font-size:0.9rem;">&#x2715;</button>
+    </div>
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Title</label>
+    <input id="at-title" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-family:Space Grotesk,sans-serif;font-size:0.88rem;color:white;outline:none;margin-bottom:0.75rem;" placeholder="Listing title">
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Etsy Link</label>
+    <input id="at-link" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-family:Space Grotesk,sans-serif;font-size:0.88rem;color:white;outline:none;margin-bottom:0.75rem;" placeholder="https://www.etsy.com/listing/...">
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Image URL</label>
+    <input id="at-img" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-family:Space Grotesk,sans-serif;font-size:0.88rem;color:white;outline:none;margin-bottom:0.5rem;" placeholder="https://..." oninput="previewATImg(this.value)">
+    <div id="at-img-preview" style="display:none;margin-bottom:0.75rem;"><img id="at-img-preview-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;" onerror="this.parentElement.style.display=none"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+      <div><label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Original Price</label><input id="at-price" style="width:100%;padding:0.55rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.85rem;color:white;outline:none;" placeholder="$4.99"></div>
+      <div><label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Sale Price</label><input id="at-sale-price" style="width:100%;padding:0.55rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.85rem;color:white;outline:none;" placeholder="$2.99"></div>
+    </div>
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Listing Age</label>
+    <input id="at-duration" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.88rem;color:white;outline:none;margin-bottom:0.75rem;" placeholder="e.g. 11 Mo., 2 years">
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Research Stats</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem;margin-bottom:0.75rem;">
+      <div><div style="font-size:0.62rem;color:#7090A8;margin-bottom:0.2rem;">Mo. Sales</div><input id="at-mo-sales" style="width:100%;padding:0.45rem 0.5rem;background:#1E3055;border:1px solid #2A3F60;border-radius:7px;font-size:0.82rem;color:white;outline:none;" placeholder="28"></div>
+      <div><div style="font-size:0.62rem;color:#7090A8;margin-bottom:0.2rem;">Mo. Revenue</div><input id="at-mo-revenue" style="width:100%;padding:0.45rem 0.5rem;background:#1E3055;border:1px solid #2A3F60;border-radius:7px;font-size:0.82rem;color:white;outline:none;" placeholder="$91"></div>
+      <div><div style="font-size:0.62rem;color:#7090A8;margin-bottom:0.2rem;">Total Rev</div><input id="at-total-revenue" style="width:100%;padding:0.45rem 0.5rem;background:#1E3055;border:1px solid #2A3F60;border-radius:7px;font-size:0.82rem;color:white;outline:none;" placeholder="$273"></div>
+      <div><div style="font-size:0.62rem;color:#7090A8;margin-bottom:0.2rem;">Views</div><input id="at-views" style="width:100%;padding:0.45rem 0.5rem;background:#1E3055;border:1px solid #2A3F60;border-radius:7px;font-size:0.82rem;color:white;outline:none;" placeholder="3814"></div>
+    </div>
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Product Type</label>
+    <select id="at-product" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.88rem;color:white;outline:none;margin-bottom:0.75rem;">
+      <option value="">select type</option>
+      <option>Alpha PNGs</option><option>Clipart</option><option>Coloring Books</option>
+      <option>Digital Paper</option><option>Journals</option><option>Procreate Brushes</option>
+      <option>Procreate Stamps</option><option>Seamless Paper</option><option>Sticker Sheets</option>
+      <option>Sublimation Designs</option><option>SVG Files</option>
+    </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+      <div><label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Theme</label><input id="at-theme" style="width:100%;padding:0.55rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.85rem;color:white;outline:none;" placeholder="e.g. Coquette, Boho..."></div>
+      <div><label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Holiday</label>
+      <select id="at-holiday" style="width:100%;padding:0.55rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.85rem;color:white;outline:none;">
+        <option value="">select</option><option>None</option><option>Halloween</option><option>Christmas</option><option>Valentine Day</option><option>Easter</option><option>Mothers Day</option><option>4th of July</option><option>Back to School</option><option>Thanksgiving</option><option>Summer</option><option>Fall Autumn</option>
+      </select></div>
+    </div>
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Tags</label>
+    <input id="at-tags" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.88rem;color:white;outline:none;margin-bottom:0.75rem;" placeholder="e.g. ghost, coquette, halloween clipart">
+    <label style="display:block;font-family:Space Mono,monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7090A8;margin-bottom:0.3rem;">Notes for Members</label>
+    <textarea id="at-notes" style="width:100%;padding:0.6rem 0.8rem;background:#1E3055;border:1px solid #2A3F60;border-radius:9px;font-size:0.85rem;color:white;outline:none;min-height:70px;resize:vertical;margin-bottom:1rem;" placeholder="e.g. Great example of coquette Halloween done well — note the pink bow styling..."></textarea>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+      <button onclick="document.getElementById('modal-add-trending').style.display='none'" style="padding:0.55rem 1rem;background:none;border:1px solid #3A5280;border-radius:8px;color:#D0E0F8;cursor:pointer;font-family:Space Grotesk,sans-serif;">Cancel</button>
+      <button onclick="saveAddTrending()" style="padding:0.55rem 1.25rem;background:#FF2D78;color:white;border:none;border-radius:8px;font-family:Syne,sans-serif;font-weight:800;font-size:0.95rem;cursor:pointer;">Add to Trending</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
