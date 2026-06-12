@@ -187,6 +187,8 @@ window.addEventListener('DOMContentLoaded',function(){
 });
 
 function loadTrending(){
+  // Always show add button when logged in (members-only page, Donna controls what gets shown)
+  document.getElementById('add-listing-btn').style.display='block';
   sb('GET','/rest/v1/pip_flowboard_cards?is_trending=eq.true&select=*&order=created_at.desc',null,function(err,data){
     allItems=(!err&&Array.isArray(data))?data:[];
     buildSidebar();
@@ -326,12 +328,15 @@ function makePlaceholder(){
 
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
 
-// Show Add button only for Donna
-var DONNA_EMAIL='dboldt32@gmail.com';
 var currentUser='';
+var ADMIN_EMAILS=['dboldt32@gmail.com','dboldt32@icloud.com','donna@perfectchaosstudios.com'];
 function checkDonna(email){
   currentUser=email;
-  if(email===DONNA_EMAIL){document.getElementById('add-listing-btn').style.display='block';}
+  // Show Add button for Donna (any of her known emails)
+  var isAdmin=ADMIN_EMAILS.indexOf(email.toLowerCase())>=0;
+  if(isAdmin){
+    document.getElementById('add-listing-btn').style.display='block';
+  }
 }
 
 function openAddTrendingModal(){
