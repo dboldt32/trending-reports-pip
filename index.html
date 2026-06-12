@@ -411,6 +411,19 @@ function openDetailModal(v,nd){
   document.getElementById('modal-detail').style.display='flex';
 }
 
+function deleteDetailCard(){
+  var pw=prompt('Admin password:');
+  if(pw!=='VIPCHAOS26'){showToast('Incorrect password');return;}
+  if(!currentDetailItem)return;
+  if(!confirm('Remove this listing from Trending Reports?'))return;
+  sb('PATCH','/rest/v1/pip_flowboard_cards?id=eq.'+currentDetailItem.id,{is_trending:false},function(err){
+    if(!err){
+      allItems=allItems.filter(function(x){return x.id!==currentDetailItem.id;});
+      document.getElementById('modal-detail').style.display='none';
+      buildSidebar();renderTrending();showToast('Removed from Trending Reports!');
+    }
+  });
+}
 function copyDetailField(field){
   if(!currentDetailItem||!currentDetailNd)return;
   var text='';
@@ -548,8 +561,8 @@ document.addEventListener('keydown',function(e){
           <button onclick="saveDetailCard()" style="padding:0.35rem 0.9rem;background:#FF2D78;border:none;border-radius:7px;color:white;font-size:0.75rem;cursor:pointer;font-family:Syne,sans-serif;font-weight:700;">Save My Notes</button>
         </div>
       </div>
-      <div id="detail-admin-row" style="display:none;padding-top:0.75rem;border-top:1px solid #2A3F60;">
-        <button id="detail-delete-btn" style="padding:0.45rem 1rem;background:none;border:1px solid rgba(255,85,85,0.4);border-radius:8px;color:#FF5555;font-size:0.82rem;cursor:pointer;font-family:Space Grotesk,sans-serif;">Delete this listing</button>
+      <div style="padding-top:0.75rem;border-top:1px solid #2A3F60;">
+        <button id="detail-delete-btn" style="padding:0.45rem 1rem;background:none;border:1px solid rgba(255,85,85,0.4);border-radius:8px;color:#FF5555;font-size:0.82rem;cursor:pointer;font-family:Space Grotesk,sans-serif;" onclick="deleteDetailCard()">Remove from Trending</button>
       </div>
     </div>
   </div>
