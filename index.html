@@ -142,47 +142,35 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   </div>
 </div>
 <script>
-const SB_URL='https://bvbuojlwrfhyeumlzffu.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2YnVvamx3cmZoeWV1bWx6ZmZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTU3OTAsImV4cCI6MjA5NjM3MTc5MH0.J4cpGcXQikdrr9tULjKA7Ez2vtNxduZdPldNMXqv9rA';
 var allItems=[];
 var activeFilter='all';
 var activeFilterVal='';
+var currentDetailItem=null;
+var currentDetailNd=null;
+var currentUser='donna';
 
 function sb(method,path,body,cb){
   var xhr=new XMLHttpRequest();
-  xhr.open(method,SB_URL+path);
-  xhr.setRequestHeader('apikey',SB_KEY);
-  xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
+  xhr.open(method,'https://bvbuojlwrfhyeumlzffu.supabase.co'+path);
+  xhr.setRequestHeader('apikey','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2YnVvamx3cmZoeWV1bWx6ZmZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTU3OTAsImV4cCI6MjA5NjM3MTc5MH0.J4cpGcXQikdrr9tULjKA7Ez2vtNxduZdPldNMXqv9rA');
+  xhr.setRequestHeader('Authorization','Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2YnVvamx3cmZoeWV1bWx6ZmZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTU3OTAsImV4cCI6MjA5NjM3MTc5MH0.J4cpGcXQikdrr9tULjKA7Ez2vtNxduZdPldNMXqv9rA');
   xhr.setRequestHeader('Content-Type','application/json');
+  if(method!=='GET'&&method!=='DELETE')xhr.setRequestHeader('Prefer','return=representation');
   xhr.onload=function(){try{cb(null,JSON.parse(xhr.responseText));}catch(e){cb(e,null);}};
   xhr.onerror=function(){cb(new Error('error'),null);};
   xhr.send(body?JSON.stringify(body):null);
 }
 
-function handleLogin(){
-  var email=document.getElementById('login-email').value.trim().toLowerCase();
-  if(!email)return;
-  document.getElementById('login-error').style.display='none';
-  sb('GET','/rest/v1/pip_members?Email=eq.'+encodeURIComponent(email)+'&select=Email',null,function(err,data){
-    if(err||!data||!data.length){document.getElementById('login-error').style.display='block';return;}
-    localStorage.setItem('pip-trending-user',email);
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    loadTrending();
-  });
-}
+function parseJ(v,def){try{return typeof v==='string'?JSON.parse(v):(v||def);}catch(e){return def;}}
 
 window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  currentUser='donna';
   document.getElementById('add-listing-btn').style.display='block';
   loadTrending();
 });
 
 function loadTrending(){
-  // Always show add button when logged in (members-only page, Donna controls what gets shown)
-  document.getElementById('add-listing-btn').style.display='block';
   sb('GET','/rest/v1/pip_flowboard_cards?is_trending=eq.true&select=*&order=created_at.desc',null,function(err,data){
     allItems=(!err&&Array.isArray(data))?data:[];
     buildSidebar();
@@ -191,9 +179,7 @@ function loadTrending(){
 }
 
 function buildSidebar(){
-  var products=['All'];
-  var holidays=['All'];
-  var themes=['All'];
+  var products=['All'],holidays=['All'],themes=['All'];
   allItems.forEach(function(v){
     var nd=parseJ(v.notes,{});
     if(v.product_type&&products.indexOf(v.product_type)<0)products.push(v.product_type);
@@ -226,35 +212,41 @@ function setFilterVal(type,val,btn){
   renderTrending();
 }
 
-function parseJ(v,def){try{return typeof v==='string'?JSON.parse(v):(v||def);}catch(e){return def;}}
+function makePlaceholder(){
+  var d=document.createElement('div');
+  d.className='trend-img-placeholder';
+  d.textContent='📈';
+  return d;
+}
 
 function renderTrending(){
   var show=allItems.slice();
   if(activeFilter==='product'&&activeFilterVal)show=show.filter(function(v){return v.product_type===activeFilterVal;});
   if(activeFilter==='holiday'&&activeFilterVal)show=show.filter(function(v){var nd=parseJ(v.notes,{});return nd.holiday===activeFilterVal;});
   if(activeFilter==='theme'&&activeFilterVal)show=show.filter(function(v){var nd=parseJ(v.notes,{});return nd.theme===activeFilterVal;});
-  if(activeFilter==='age-new')show=show.filter(function(v){var nd=parseJ(v.notes,{});var dur=nd.listed_duration||'';return dur.indexOf('Mo.')>0&&parseInt(dur)<12;});
-  if(activeFilter==='age-mid')show=show.filter(function(v){var nd=parseJ(v.notes,{});var dur=nd.listed_duration||'';return dur.indexOf('1 year')>=0||dur.indexOf('1 Year')>=0;});
-  if(activeFilter==='age-old')show=show.filter(function(v){var nd=parseJ(v.notes,{});var dur=nd.listed_duration||'';return dur.indexOf('2')>=0&&dur.toLowerCase().indexOf('year')>=0;});
+  if(activeFilter==='age-new')show=show.filter(function(v){var nd=parseJ(v.notes,{});return (nd.listed_duration||'').match(/^\d+\s*Mo/i)&&parseInt(nd.listed_duration)<12;});
+  if(activeFilter==='age-mid')show=show.filter(function(v){var nd=parseJ(v.notes,{});return /1\s*year/i.test(nd.listed_duration||'');});
+  if(activeFilter==='age-old')show=show.filter(function(v){var nd=parseJ(v.notes,{});return /[2-9]\s*year/i.test(nd.listed_duration||'');});
 
   document.getElementById('results-count').textContent=show.length+' listing'+(show.length!==1?'s':'')+' found';
   var grid=document.getElementById('trending-grid');
+  grid.innerHTML='';
+
   if(!show.length){
-    grid.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#x1F4C8;</div><h3>No listings match this filter.</h3><p>Try a different filter or check back as Donna adds more.</p></div>';
+    grid.innerHTML='<div class="empty-state"><div class="empty-state-icon">📈</div><h3>No listings match this filter.</h3><p>Try a different filter or check back as Donna adds more.</p></div>';
     return;
   }
-  grid.innerHTML='';
+
   show.forEach(function(v){
     var nd=parseJ(v.notes,{});
     var card=document.createElement('div');
     card.className='trend-card';
     card.style.cursor='pointer';
-    (function(item,ndRef){
-      card.onclick=function(e){
-        if(e.target.tagName==='A'||e.target.tagName==='BUTTON')return;
-        openDetailModal(item,ndRef);
-      };
-    })(v,nd);
+    card.onclick=function(e){
+      if(e.target.tagName==='A'||e.target.tagName==='BUTTON')return;
+      openDetailModal(v,nd);
+    };
+
     // Image
     if(nd.img){
       var img=document.createElement('img');
@@ -264,33 +256,38 @@ function renderTrending(){
     } else {
       card.appendChild(makePlaceholder());
     }
+
     // Body
-    var body=document.createElement('div');
-    body.className='trend-body';
+    var body=document.createElement('div');body.className='trend-body';
+    var colorMap={'Clipart':'--s1','Alpha PNGs':'--s3','Coloring Books':'--s2','Digital Paper':'--s7','Journals':'--s4','Seamless Paper':'--s2','Sticker Sheets':'--s6','Sublimation Designs':'--s5'};
+    var sc=colorMap[v.product_type]||'--s1';
+
     // Title
-    var title=document.createElement('div');
-    title.className='trend-title';title.textContent=v.title;
-    body.appendChild(title);
+    var title=document.createElement('div');title.className='trend-title';title.textContent=v.title;body.appendChild(title);
+
     // Tags
     var tags=document.createElement('div');tags.className='trend-tags';
     if(v.product_type){var t1=document.createElement('span');t1.className='trend-tag product';t1.textContent=v.product_type;tags.appendChild(t1);}
     if(nd.holiday&&nd.holiday!=='None'){var t2=document.createElement('span');t2.className='trend-tag holiday';t2.textContent=nd.holiday;tags.appendChild(t2);}
     if(nd.theme){var t3=document.createElement('span');t3.className='trend-tag theme';t3.textContent=nd.theme;tags.appendChild(t3);}
     if(tags.children.length)body.appendChild(tags);
+
     // Keyword pills
     if(nd.tags){
       var pills=document.createElement('div');pills.className='trend-pills';
-      nd.tags.split(',').slice(0,6).forEach(function(t){
+      nd.tags.split(',').slice(0,5).forEach(function(t){
         if(!t.trim())return;
         var p=document.createElement('span');p.className='trend-pill';p.textContent=t.trim();pills.appendChild(p);
       });
-      body.appendChild(pills);
+      if(pills.children.length)body.appendChild(pills);
     }
+
     // Stats
-    var hasStats=nd.mo_sales||nd.mo_revenue||nd.total_revenue||nd.views||nd.listed_duration;
+    var statData=[{l:'Mo. Sales',v:nd.mo_sales},{l:'Mo. Rev',v:nd.mo_revenue?'$'+nd.mo_revenue.replace('$',''):null},{l:'Total Rev',v:nd.total_revenue?'$'+nd.total_revenue.replace('$',''):null},{l:'Views',v:nd.views},{l:'Age',v:nd.listed_duration}];
+    var hasStats=statData.some(function(s){return !!s.v;});
     if(hasStats){
       var statsRow=document.createElement('div');statsRow.className='trend-stats';
-      [{l:'Mo. Sales',v:nd.mo_sales},{l:'Mo. Rev',v:nd.mo_revenue?'$'+nd.mo_revenue.replace('$',''):null},{l:'Total Rev',v:nd.total_revenue?'$'+nd.total_revenue.replace('$',''):null},{l:'Views',v:nd.views},{l:'Age',v:nd.listed_duration}].forEach(function(s){
+      statData.forEach(function(s){
         if(!s.v)return;
         var pill=document.createElement('div');pill.className='stat-pill';
         var lbl=document.createElement('div');lbl.className='stat-lbl';lbl.textContent=s.l;
@@ -299,57 +296,61 @@ function renderTrending(){
       });
       body.appendChild(statsRow);
     }
+
     // Price + link
     var priceRow=document.createElement('div');priceRow.className='trend-price-row';
     if(nd.price||nd.sale_price){
-      var priceEl=document.createElement('div');priceEl.className='trend-price';
-      if(nd.price)priceEl.innerHTML+='Orig: <strong>'+(nd.price.startsWith('$')?nd.price:'$'+nd.price)+'</strong> ';
-      if(nd.sale_price)priceEl.innerHTML+='<span class="sale">Sale: '+(nd.sale_price.startsWith('$')?nd.sale_price:'$'+nd.sale_price)+'</span>';
-      priceRow.appendChild(priceEl);
+      var prEl=document.createElement('div');prEl.className='trend-price';
+      if(nd.price)prEl.innerHTML+='Orig: <strong>'+(nd.price.startsWith('$')?nd.price:'$'+nd.price)+'</strong> ';
+      if(nd.sale_price)prEl.innerHTML+='<span class="sale">Sale: '+(nd.sale_price.startsWith('$')?nd.sale_price:'$'+nd.sale_price)+'</span>';
+      priceRow.appendChild(prEl);
     }
     if(nd.link){
-      var link=document.createElement('a');link.href=nd.link;link.target='_blank';link.className='trend-link';link.textContent='View listing';
-      priceRow.appendChild(link);
+      var lnk=document.createElement('a');lnk.href=nd.link;lnk.target='_blank';lnk.className='trend-link';lnk.textContent='View listing';lnk.onclick=function(e){e.stopPropagation();};
+      priceRow.appendChild(lnk);
     }
     if(priceRow.children.length)body.appendChild(priceRow);
-    // Donna's notes
+
+    // Donna notes snippet
     if(nd.my_notes){
-      var notes=document.createElement('div');notes.className='trend-notes';
-      notes.innerHTML='<strong>Donna\'s Notes</strong>'+nd.my_notes;
-      body.appendChild(notes);
+      var notesEl=document.createElement('div');notesEl.className='trend-notes';
+      notesEl.innerHTML='<strong>Donna\'s Notes</strong>'+nd.my_notes.substring(0,100)+(nd.my_notes.length>100?'...':'');
+      body.appendChild(notesEl);
     }
+
     card.appendChild(body);
     grid.appendChild(card);
   });
 }
 
-function makePlaceholder(){
-  var d=document.createElement('div');d.className='trend-img-placeholder';d.textContent='&#x1F4C8;';return d;
-}
-
-var currentDetailItem=null;
-var currentDetailNd=null;
 function openDetailModal(v,nd){
   currentDetailItem=v;
   currentDetailNd=nd;
-  // Load saved notes for this user
-  var savedNotes=localStorage.getItem('trend-notes-'+v.id)||'';
-  document.getElementById('detail-my-notes').value=savedNotes;
+
   // Image
   var imgWrap=document.getElementById('detail-img-wrap');
   var img=document.getElementById('detail-img');
   if(nd.img){img.src=nd.img;imgWrap.style.display='block';}
   else imgWrap.style.display='none';
+
   // Title
   document.getElementById('detail-title').textContent=v.title;
+
   // Tags
   var tagsEl=document.getElementById('detail-tags');tagsEl.innerHTML='';
   if(v.product_type){var t1=document.createElement('span');t1.className='trend-tag product';t1.textContent=v.product_type;tagsEl.appendChild(t1);}
   if(nd.holiday&&nd.holiday!=='None'){var t2=document.createElement('span');t2.className='trend-tag holiday';t2.textContent=nd.holiday;tagsEl.appendChild(t2);}
   if(nd.theme){var t3=document.createElement('span');t3.className='trend-tag theme';t3.textContent=nd.theme;tagsEl.appendChild(t3);}
+
   // Keyword pills
   var pillsEl=document.getElementById('detail-pills');pillsEl.innerHTML='';
-  if(nd.tags){nd.tags.split(',').forEach(function(t){if(!t.trim())return;var p=document.createElement('span');p.className='trend-pill';p.textContent=t.trim();pillsEl.appendChild(p);});}
+  if(nd.tags){
+    nd.tags.split(',').forEach(function(t){
+      if(!t.trim())return;
+      var p=document.createElement('span');p.className='trend-pill';p.textContent=t.trim();pillsEl.appendChild(p);
+    });
+  }
+
   // Stats
   var statsEl=document.getElementById('detail-stats');statsEl.innerHTML='';
   [{l:'Mo. Sales',v:nd.mo_sales},{l:'Mo. Revenue',v:nd.mo_revenue?'$'+nd.mo_revenue.replace('$',''):null},{l:'Total Revenue',v:nd.total_revenue?'$'+nd.total_revenue.replace('$',''):null},{l:'Views',v:nd.views},{l:'Listing Age',v:nd.listed_duration}].forEach(function(s){
@@ -360,6 +361,10 @@ function openDetailModal(v,nd){
     pill.appendChild(lbl);pill.appendChild(val);statsEl.appendChild(pill);
   });
   statsEl.style.display=statsEl.children.length?'flex':'none';
+  statsEl.style.borderTop=statsEl.children.length?'1px solid #2A3F60':'none';
+  statsEl.style.paddingTop=statsEl.children.length?'0.75rem':'0';
+  statsEl.style.marginBottom=statsEl.children.length?'0.875rem':'0';
+
   // Price + link
   var priceRow=document.getElementById('detail-price-row');priceRow.innerHTML='';
   if(nd.price||nd.sale_price){
@@ -373,21 +378,17 @@ function openDetailModal(v,nd){
     priceRow.appendChild(lnk);
   }
   priceRow.style.display=priceRow.children.length?'flex':'none';
+
   // Donna's notes
   var notesBox=document.getElementById('detail-notes');
   if(nd.my_notes){document.getElementById('detail-notes-text').textContent=nd.my_notes;notesBox.style.display='block';}
   else notesBox.style.display='none';
-  // Admin delete button - only for Donna
-  var adminRow=document.getElementById('detail-admin-row');
-  // Always show delete to logged-in user - only Donna adds content anyway
-  var ADMIN_EMAILS=['dboldt32@gmail.com','dboldt32@icloud.com','donna@perfectchaosstudios.com'];
-  var isAdmin=ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0||currentUser.length>0;
-  if(isAdmin){
-    adminRow.style.display='block';
-    // Only actually allow delete if Donna
-    document.getElementById('detail-delete-btn').style.display=ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0?'block':'none';
-    var delBtn=document.getElementById('detail-delete-btn');
-    delBtn.onclick=function(){deleteDetailCard();};
+
+  // My saved notes
+  document.getElementById('detail-my-notes').value=localStorage.getItem('trend-notes-'+v.id)||'';
+
+  document.getElementById('modal-detail').style.display='flex';
+}
 
 function deleteDetailCard(){
   if(!currentDetailItem)return;
@@ -400,21 +401,16 @@ function deleteDetailCard(){
     }
   });
 }
+
 function copyDetailField(field){
   if(!currentDetailItem||!currentDetailNd)return;
-  var text='';
-  if(field==='title'){
-    text=currentDetailItem.title||'';
-  } else if(field==='tags'){
-    text=currentDetailNd.tags||'';
-  }
+  var text=field==='title'?currentDetailItem.title:(currentDetailNd.tags||'');
   if(!text){showToast('Nothing to copy');return;}
   navigator.clipboard.writeText(text).then(function(){
-    showToast('Copied to clipboard!');
+    showToast('Copied!');
   }).catch(function(){
-    // fallback
-    var ta=document.createElement('textarea');
-    ta.value=text;document.body.appendChild(ta);ta.select();
+    var ta=document.createElement('textarea');ta.value=text;
+    document.body.appendChild(ta);ta.select();
     document.execCommand('copy');document.body.removeChild(ta);
     showToast('Copied!');
   });
@@ -423,38 +419,9 @@ function copyDetailField(field){
 function saveDetailCard(){
   if(!currentDetailItem)return;
   var notes=document.getElementById('detail-my-notes').value.trim();
-  // Save notes to localStorage with first 3 words of title as key label
-  var words=currentDetailItem.title.trim().split(/\s+/).slice(0,3).join('_').replace(/[^a-zA-Z0-9_]/g,'');
-  var key='trend-notes-'+currentDetailItem.id;
-  localStorage.setItem(key, notes);
-  // Also save a named copy for easy reference
-  var savedCards=JSON.parse(localStorage.getItem('trend-saved-cards')||'[]');
-  var existing=savedCards.findIndex(function(c){return c.id===currentDetailItem.id;});
-  var saveObj={
-    id:currentDetailItem.id,
-    title:currentDetailItem.title,
-    saveKey:words,
-    notes:notes,
-    product_type:currentDetailItem.product_type,
-    savedAt:new Date().toISOString()
-  };
-  if(existing>=0)savedCards[existing]=saveObj;
-  else savedCards.unshift(saveObj);
-  localStorage.setItem('trend-saved-cards', JSON.stringify(savedCards));
+  var words=currentDetailItem.title.trim().split(' ').slice(0,3).join('_').replace(/[^a-zA-Z0-9_]/g,'');
+  localStorage.setItem('trend-notes-'+currentDetailItem.id,notes);
   showToast('Saved as: '+words+'!');
-}
-
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
-
-var currentUser='';
-var ADMIN_EMAILS=['dboldt32@gmail.com','dboldt32@icloud.com','donna@perfectchaosstudios.com'];
-function checkDonna(email){
-  currentUser=email;
-  // Show Add button for Donna (any of her known emails)
-  var isAdmin=ADMIN_EMAILS.indexOf(email.toLowerCase())>=0;
-  if(isAdmin){
-    document.getElementById('add-listing-btn').style.display='block';
-  }
 }
 
 function openAddTrendingModal(){
@@ -468,7 +435,8 @@ function openAddTrendingModal(){
 
 function previewATImg(url){
   var p=document.getElementById('at-img-preview'),i=document.getElementById('at-img-preview-img');
-  if(url&&url.startsWith('http')){i.src=url;p.style.display='block';}else p.style.display='none';
+  if(url&&url.startsWith('http')){i.src=url;p.style.display='block';}
+  else p.style.display='none';
 }
 
 function saveAddTrending(){
@@ -491,7 +459,7 @@ function saveAddTrending(){
   };
   var pt=document.getElementById('at-product').value||'';
   sb('POST','/rest/v1/pip_flowboard_cards',{
-    member_email:currentUser,title:title,product_type:pt,category:pt,
+    member_email:'donna@pip',title:title,product_type:pt,category:pt,
     stage:'vault',is_trending:true,notes:JSON.stringify(nd),
     checklist:{},etsy_url:'',is_starred:false,stale_nudge_dismissed:false
   },function(err,resp){
@@ -503,11 +471,19 @@ function saveAddTrending(){
   });
 }
 
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2800);
+}
+
 document.addEventListener('keydown',function(e){
-  if(e.key==='Escape')document.querySelectorAll('[id^="modal-"]').forEach(function(m){m.style.display='none';});
+  if(e.key==='Escape'){
+    document.getElementById('modal-detail').style.display='none';
+    document.getElementById('modal-add-trending').style.display='none';
+  }
 });
-}
-}
+
 </script>
 
 <!-- CARD DETAIL MODAL -->
