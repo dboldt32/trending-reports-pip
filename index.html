@@ -29,15 +29,15 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .sidebar{width:220px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border);padding:1.25rem 0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
 .sidebar-section{padding:0 1rem 1rem;}
 .sidebar-label{font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;padding:0 0.25rem;}
-.sidebar-btn{width:100%;text-align:left;padding:0.45rem 0.65rem;background:none;border:none;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;transition:all 0.15s;margin-bottom:0.15rem;}
+.sidebar-btn{width:100%;text-align:left;padding:0.45rem 0.65rem;background:none;border:none;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:0.85rem;color:var(--text-secondary);cursor:pointer;transition:all 0.15s;margin-bottom:0.15rem;}
 .sidebar-btn:hover{background:var(--bg-raised);color:var(--text-primary);}
 .sidebar-btn.active{background:var(--accent-glow);color:var(--accent);font-weight:700;}
 .sidebar-divider{height:1px;background:var(--border);margin:0.75rem 1rem;}
 /* MAIN CONTENT */
 .main-content{flex:1;padding:1.5rem;overflow-x:hidden;}
 .page-header{margin-bottom:1.25rem;}
-.page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;margin-bottom:0.3rem;}
-.page-header p{font-size:0.9rem;color:var(--text-secondary);line-height:1.6;}
+.page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:0.3rem;}
+.page-header p{font-size:0.85rem;color:var(--text-secondary);line-height:1.6;font-family:'Space Grotesk',sans-serif;}
 .results-count{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-muted);margin-bottom:1rem;}
 /* TRENDING CARDS GRID */
 .trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.875rem;}
@@ -46,21 +46,21 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .trend-img{width:100%;height:150px;object-fit:cover;background:var(--bg-raised);display:block;}
 .trend-img-placeholder{width:100%;height:150px;background:var(--bg-raised);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
 .trend-body{padding:0.75rem 0.875rem 0.75rem;}
-.trend-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.82rem;color:var(--text-primary);margin-bottom:0.4rem;line-height:1.3;}
+.trend-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.78rem;color:var(--text-primary);margin-bottom:0.4rem;line-height:1.4;}
 .trend-tags{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.65rem;}
-.trend-tag{font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:20px;}
+.trend-tag{font-size:0.75rem;font-weight:600;padding:0.2rem 0.6rem;border-radius:20px;font-family:'Space Grotesk',sans-serif;}
 .trend-tag.product{background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);}
 .trend-tag.holiday{background:rgba(255,214,0,0.12);color:var(--accent3);border:1px solid rgba(255,214,0,0.3);}
 .trend-tag.theme{background:var(--bg-raised);color:var(--text-secondary);border:1px solid var(--border);}
 .trend-pills{display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.65rem;}
-.trend-pill{font-size:0.68rem;padding:0.1rem 0.4rem;border-radius:8px;background:var(--bg-panel);color:var(--text-muted);border:1px solid var(--border);}
+.trend-pill{font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:8px;background:var(--bg-panel);color:var(--text-secondary);border:1px solid var(--border);font-family:'Space Grotesk',sans-serif;}
 .trend-stats{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;padding-top:0.6rem;border-top:1px solid var(--border);}
 .stat-pill{display:flex;flex-direction:column;align-items:center;background:var(--bg-raised);border:1px solid var(--border);border-radius:8px;padding:0.3rem 0.6rem;min-width:58px;}
-.stat-lbl{font-size:0.58rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);}
-.stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:0.88rem;color:var(--text-primary);}
+.stat-lbl{font-size:0.6rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted);}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.82rem;color:var(--text-primary);}
 .trend-price-row{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;}
-.trend-price{font-size:0.82rem;color:var(--text-secondary);}
-.trend-price strong{font-family:'Syne',sans-serif;font-size:0.9rem;color:var(--text-primary);}
+.trend-price{font-size:0.8rem;color:var(--text-secondary);font-family:'Space Grotesk',sans-serif;}
+.trend-price strong{font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text-primary);}
 .trend-price .sale{color:var(--accent2);}
 .trend-link{font-size:0.75rem;color:var(--accent);text-decoration:none;font-weight:700;}
 .trend-link:hover{text-decoration:underline;}
