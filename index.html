@@ -397,17 +397,6 @@ function openDetailModal(v,nd){
       var pw=prompt('Enter admin password to delete:');
       if(pw!=='VIPCHAOS26'){showToast('Incorrect password');return;}
       if(!confirm('Remove this listing from Trending Reports?'))return;
-      sb('PATCH','/rest/v1/pip_flowboard_cards?id=eq.'+v.id,{is_trending:false},function(err){
-        if(!err){
-          allItems=allItems.filter(function(x){return x.id!==v.id;});
-          document.getElementById('modal-detail').style.display='none';
-          buildSidebar();renderTrending();showToast('Removed from Trending Reports');
-        }
-      });
-    };
-  } else {
-    adminRow.style.display='none';
-  }
   document.getElementById('modal-detail').style.display='flex';
 }
 
