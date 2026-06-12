@@ -173,20 +173,11 @@ function handleLogin(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  var saved=sessionStorage.getItem('pip_member')||localStorage.getItem('pip-flow-user')||localStorage.getItem('pip-trending-user')||localStorage.getItem('pip-member')||localStorage.getItem('memberEmail');
-  if(saved){
-    sb('GET','/rest/v1/pip_members?Email=eq.'+encodeURIComponent(saved)+'&select=Email',null,function(err,data){
-      if(!err&&data&&data.length){
-        document.getElementById('login-screen').style.display='none';
-        document.getElementById('app').style.display='block';
-        loadTrending();
-      }
-    });
-  }
-  // Pre-fill email if stored
-  var prefill=sessionStorage.getItem('pip_member')||localStorage.getItem('pip-flow-user')||localStorage.getItem('pip-trending-user')||localStorage.getItem('memberEmail');
-  if(prefill)document.getElementById('login-email').value=prefill;
-  document.getElementById('login-email').addEventListener('keydown',function(e){if(e.key==='Enter')handleLogin();});
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  currentUser='donna';
+  document.getElementById('add-listing-btn').style.display='block';
+  loadTrending();
 });
 
 function loadTrending(){
