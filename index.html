@@ -393,14 +393,9 @@ function openDetailModal(v,nd){
     // Only actually allow delete if Donna
     document.getElementById('detail-delete-btn').style.display=ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0?'block':'none';
     var delBtn=document.getElementById('detail-delete-btn');
-    delBtn.onclick=function(){
-      var pw=prompt('Enter admin password to delete:');
-      document.getElementById('modal-detail').style.display='flex';
-}
+    delBtn.onclick=function(){deleteDetailCard();};
 
 function deleteDetailCard(){
-  var pw=prompt('Admin password:');
-  if(pw!=='VIPCHAOS26'){showToast('Incorrect password');return;}
   if(!currentDetailItem)return;
   if(!confirm('Remove this listing from Trending Reports?'))return;
   sb('PATCH','/rest/v1/pip_flowboard_cards?id=eq.'+currentDetailItem.id,{is_trending:false},function(err){
