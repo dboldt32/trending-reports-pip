@@ -395,8 +395,7 @@ function openDetailModal(v,nd){
     var delBtn=document.getElementById('detail-delete-btn');
     delBtn.onclick=function(){
       var pw=prompt('Enter admin password to delete:');
-      if(pw!=='VIPCHAOS26'){showToast('Incorrect password');return;}
-  document.getElementById('modal-detail').style.display='flex';
+      document.getElementById('modal-detail').style.display='flex';
 }
 
 function deleteDetailCard(){
