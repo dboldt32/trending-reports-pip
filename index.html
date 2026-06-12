@@ -40,13 +40,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .page-header p{font-size:0.9rem;color:var(--text-secondary);line-height:1.6;}
 .results-count{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-muted);margin-bottom:1rem;}
 /* TRENDING CARDS GRID */
-.trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem;}
+.trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.875rem;}
 .trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.18s;box-shadow:0 2px 12px rgba(0,0,0,0.3);}
 .trend-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.4);border-color:var(--border-bright);}
-.trend-img{width:100%;height:200px;object-fit:cover;background:var(--bg-raised);display:block;}
-.trend-img-placeholder{width:100%;height:200px;background:var(--bg-raised);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
-.trend-body{padding:1rem 1.1rem 0.875rem;}
-.trend-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text-primary);margin-bottom:0.5rem;line-height:1.3;}
+.trend-img{width:100%;height:150px;object-fit:cover;background:var(--bg-raised);display:block;}
+.trend-img-placeholder{width:100%;height:150px;background:var(--bg-raised);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+.trend-body{padding:0.75rem 0.875rem 0.75rem;}
+.trend-title{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;color:var(--text-primary);margin-bottom:0.4rem;line-height:1.3;}
 .trend-tags{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.65rem;}
 .trend-tag{font-size:0.72rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:20px;}
 .trend-tag.product{background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);}
@@ -254,6 +254,13 @@ function renderTrending(){
     var nd=parseJ(v.notes,{});
     var card=document.createElement('div');
     card.className='trend-card';
+    card.style.cursor='pointer';
+    (function(item,ndRef){
+      card.onclick=function(e){
+        if(e.target.tagName==='A'||e.target.tagName==='BUTTON')return;
+        openDetailModal(item,ndRef);
+      };
+    })(v,nd);
     // Image
     if(nd.img){
       var img=document.createElement('img');
@@ -326,6 +333,71 @@ function makePlaceholder(){
   var d=document.createElement('div');d.className='trend-img-placeholder';d.textContent='&#x1F4C8;';return d;
 }
 
+function openDetailModal(v,nd){
+  // Image
+  var imgWrap=document.getElementById('detail-img-wrap');
+  var img=document.getElementById('detail-img');
+  if(nd.img){img.src=nd.img;imgWrap.style.display='block';}
+  else imgWrap.style.display='none';
+  // Title
+  document.getElementById('detail-title').textContent=v.title;
+  // Tags
+  var tagsEl=document.getElementById('detail-tags');tagsEl.innerHTML='';
+  if(v.product_type){var t1=document.createElement('span');t1.className='trend-tag product';t1.textContent=v.product_type;tagsEl.appendChild(t1);}
+  if(nd.holiday&&nd.holiday!=='None'){var t2=document.createElement('span');t2.className='trend-tag holiday';t2.textContent=nd.holiday;tagsEl.appendChild(t2);}
+  if(nd.theme){var t3=document.createElement('span');t3.className='trend-tag theme';t3.textContent=nd.theme;tagsEl.appendChild(t3);}
+  // Keyword pills
+  var pillsEl=document.getElementById('detail-pills');pillsEl.innerHTML='';
+  if(nd.tags){nd.tags.split(',').forEach(function(t){if(!t.trim())return;var p=document.createElement('span');p.className='trend-pill';p.textContent=t.trim();pillsEl.appendChild(p);});}
+  // Stats
+  var statsEl=document.getElementById('detail-stats');statsEl.innerHTML='';
+  [{l:'Mo. Sales',v:nd.mo_sales},{l:'Mo. Revenue',v:nd.mo_revenue?'$'+nd.mo_revenue.replace('$',''):null},{l:'Total Revenue',v:nd.total_revenue?'$'+nd.total_revenue.replace('$',''):null},{l:'Views',v:nd.views},{l:'Listing Age',v:nd.listed_duration}].forEach(function(s){
+    if(!s.v)return;
+    var pill=document.createElement('div');pill.className='stat-pill';
+    var lbl=document.createElement('div');lbl.className='stat-lbl';lbl.textContent=s.l;
+    var val=document.createElement('div');val.className='stat-val';val.textContent=s.v;
+    pill.appendChild(lbl);pill.appendChild(val);statsEl.appendChild(pill);
+  });
+  statsEl.style.display=statsEl.children.length?'flex':'none';
+  // Price + link
+  var priceRow=document.getElementById('detail-price-row');priceRow.innerHTML='';
+  if(nd.price||nd.sale_price){
+    var prEl=document.createElement('div');prEl.className='trend-price';
+    if(nd.price)prEl.innerHTML+='Orig: <strong>'+(nd.price.startsWith('$')?nd.price:'$'+nd.price)+'</strong> ';
+    if(nd.sale_price)prEl.innerHTML+='<span class="sale">Sale: '+(nd.sale_price.startsWith('$')?nd.sale_price:'$'+nd.sale_price)+'</span>';
+    priceRow.appendChild(prEl);
+  }
+  if(nd.link){
+    var lnk=document.createElement('a');lnk.href=nd.link;lnk.target='_blank';lnk.className='trend-link';lnk.textContent='View on Etsy';lnk.onclick=function(e){e.stopPropagation();};
+    priceRow.appendChild(lnk);
+  }
+  priceRow.style.display=priceRow.children.length?'flex':'none';
+  // Donna's notes
+  var notesBox=document.getElementById('detail-notes');
+  if(nd.my_notes){document.getElementById('detail-notes-text').textContent=nd.my_notes;notesBox.style.display='block';}
+  else notesBox.style.display='none';
+  // Admin delete button - only for Donna
+  var adminRow=document.getElementById('detail-admin-row');
+  var ADMIN_EMAILS=['dboldt32@gmail.com','dboldt32@icloud.com','donna@perfectchaosstudios.com'];
+  if(ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0){
+    adminRow.style.display='block';
+    var delBtn=document.getElementById('detail-delete-btn');
+    delBtn.onclick=function(){
+      if(!confirm('Delete this listing from Trending Reports?'))return;
+      sb('PATCH','/rest/v1/pip_flowboard_cards?id=eq.'+v.id,{is_trending:false},function(err){
+        if(!err){
+          allItems=allItems.filter(function(x){return x.id!==v.id;});
+          document.getElementById('modal-detail').style.display='none';
+          buildSidebar();renderTrending();showToast('Removed from Trending Reports');
+        }
+      });
+    };
+  } else {
+    adminRow.style.display='none';
+  }
+  document.getElementById('modal-detail').style.display='flex';
+}
+
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
 
 var currentUser='';
@@ -389,6 +461,32 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape')document.querySelectorAll('[id^="modal-"]').forEach(function(m){m.style.display='none';});
 });
 </script>
+
+<!-- CARD DETAIL MODAL -->
+<div id="modal-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;">
+  <div style="background:#111F35;border:1px solid #3A5280;border-radius:18px;width:100%;max-width:560px;box-shadow:0 8px 40px rgba(0,0,0,0.6);overflow:hidden;margin:auto;">
+    <div id="detail-img-wrap" style="width:100%;height:220px;overflow:hidden;background:#1E3055;display:none;">
+      <img id="detail-img" style="width:100%;height:220px;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+    </div>
+    <div style="padding:1.25rem 1.5rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.875rem;">
+        <div id="detail-title" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.25rem;color:white;line-height:1.3;flex:1;"></div>
+        <button onclick="document.getElementById('modal-detail').style.display='none'" style="background:rgba(255,255,255,0.1);border:1px solid #3A5280;border-radius:6px;color:white;width:28px;height:28px;cursor:pointer;font-size:0.85rem;flex-shrink:0;">&#x2715;</button>
+      </div>
+      <div id="detail-tags" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.875rem;"></div>
+      <div id="detail-pills" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.875rem;"></div>
+      <div id="detail-stats" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.875rem;padding-top:0.75rem;border-top:1px solid #2A3F60;"></div>
+      <div id="detail-price-row" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.875rem;padding-top:0.75rem;border-top:1px solid #2A3F60;"></div>
+      <div id="detail-notes" style="display:none;padding:0.875rem;background:#1E3055;border-radius:10px;margin-bottom:0.875rem;">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FF2D78;margin-bottom:0.35rem;">Donna's Notes</div>
+        <div id="detail-notes-text" style="font-size:0.88rem;color:#D0E0F8;line-height:1.6;"></div>
+      </div>
+      <div id="detail-admin-row" style="display:none;padding-top:0.75rem;border-top:1px solid #2A3F60;">
+        <button id="detail-delete-btn" style="padding:0.45rem 1rem;background:none;border:1px solid rgba(255,85,85,0.4);border-radius:8px;color:#FF5555;font-size:0.82rem;cursor:pointer;font-family:Space Grotesk,sans-serif;">Delete this listing</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ADD TO TRENDING MODAL -->
 <div id="modal-add-trending" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:1rem;">
