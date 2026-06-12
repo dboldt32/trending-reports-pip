@@ -385,12 +385,18 @@ function openDetailModal(v,nd){
   else notesBox.style.display='none';
   // Admin delete button - only for Donna
   var adminRow=document.getElementById('detail-admin-row');
+  // Always show delete to logged-in user - only Donna adds content anyway
   var ADMIN_EMAILS=['dboldt32@gmail.com','dboldt32@icloud.com','donna@perfectchaosstudios.com'];
-  if(ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0){
+  var isAdmin=ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0||currentUser.length>0;
+  if(isAdmin){
     adminRow.style.display='block';
+    // Only actually allow delete if Donna
+    document.getElementById('detail-delete-btn').style.display=ADMIN_EMAILS.indexOf(currentUser.toLowerCase())>=0?'block':'none';
     var delBtn=document.getElementById('detail-delete-btn');
     delBtn.onclick=function(){
-      if(!confirm('Delete this listing from Trending Reports?'))return;
+      var pw=prompt('Enter admin password to delete:');
+      if(pw!=='VIPCHAOS26'){showToast('Incorrect password');return;}
+      if(!confirm('Remove this listing from Trending Reports?'))return;
       sb('PATCH','/rest/v1/pip_flowboard_cards?id=eq.'+v.id,{is_trending:false},function(err){
         if(!err){
           allItems=allItems.filter(function(x){return x.id!==v.id;});
