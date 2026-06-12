@@ -173,7 +173,7 @@ function handleLogin(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  var saved=sessionStorage.getItem('pip_member')||localStorage.getItem('pip-trending-user')||localStorage.getItem('pip-flow-user');
+  var saved=sessionStorage.getItem('pip_member')||localStorage.getItem('pip-flow-user')||localStorage.getItem('pip-trending-user')||localStorage.getItem('pip-member')||localStorage.getItem('memberEmail');
   if(saved){
     sb('GET','/rest/v1/pip_members?Email=eq.'+encodeURIComponent(saved)+'&select=Email',null,function(err,data){
       if(!err&&data&&data.length){
@@ -183,6 +183,9 @@ window.addEventListener('DOMContentLoaded',function(){
       }
     });
   }
+  // Pre-fill email if stored
+  var prefill=sessionStorage.getItem('pip_member')||localStorage.getItem('pip-flow-user')||localStorage.getItem('pip-trending-user')||localStorage.getItem('memberEmail');
+  if(prefill)document.getElementById('login-email').value=prefill;
   document.getElementById('login-email').addEventListener('keydown',function(e){if(e.key==='Enter')handleLogin();});
 });
 
